@@ -12,6 +12,9 @@ import function as func
 #### func.numerical_analysis(activation_function, initial_width, final_width, depth, Cw, Cb, Mu, Nboot, rescale)
 # Instantiated the network and completes a numerical analysis to give values for g0l, g1l and the O(1/n^2) corrections all as a function of width.
 
+
 func.numerical_analysis(tf.nn.tanh, initial_width=10, final_width=15, depth=10, Cw=1, Cb=0, Mu=0, Nboot=1000, rescale=False)
 
+
+#Showing the convergence to a fixed point K*.
 #func.analytical_recursion(tf.nn.tanh, 100, 10, 1, 0)
