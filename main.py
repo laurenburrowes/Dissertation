@@ -1,5 +1,6 @@
 import tensorflow as tf
 import function as func
+import analytical as ana
 
 # Activation Function Options:
 # [1.] tf.nn.tanh [2.] tf.nn.sigmoid [3.] tf.nn.elu [4.] tf.nn.relu [5.] tf.nn.selu [6.] tf.nn.gelu [7.] func.linear
@@ -13,8 +14,13 @@ import function as func
 # Instantiated the network and completes a numerical analysis to give values for g0l, g1l and the O(1/n^2) corrections all as a function of width.
 
 
-func.numerical_analysis(tf.nn.tanh, initial_width=10, final_width=15, depth=10, Cw=1, Cb=0, Mu=0, Nboot=1000, rescale=False)
+#func.numerical_analysis(tf.nn.tanh, initial_width=10, final_width=15, depth=10, Cw=1, Cb=0, Mu=0, Nboot=1000, rescale=False)
 
 
 #Showing the convergence to a fixed point K*.
-#func.analytical_recursion(tf.nn.tanh, 100, 10, 1, 0)
+# func.analytical_recursion(tf.nn.tanh, 100, 10, 1, 0)
+
+#Analytical recursion finding fixed point(s)
+# ana.fixed_pt_check(tf.nn.tanh, 0.5, 0.5, 10)
+
+ana.fixed_pt_goal_seek(tf.nn.relu, 3, 0.01)

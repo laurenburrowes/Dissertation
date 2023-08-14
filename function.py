@@ -2,6 +2,7 @@
 import math
 import matplotlib.pyplot as plt
 import numpy as np
+import sympy as smp
 import tensorflow as tf
 import plot
 from scipy.optimize import curve_fit
@@ -315,7 +316,6 @@ def numerical_analysis(activation_function, initial_width, final_width, depth, C
 
     return
 
-
 def avg_rho_sq(activation_function, k):
 
     coeff = 1 / (np.sqrt(2 * math.pi * k))
@@ -325,6 +325,21 @@ def avg_rho_sq(activation_function, k):
     est_error = integral[1]
 
     return value, est_error
+
+
+def avgrho(function, k):
+    coeff = 1 / (np.sqrt(2 * math.pi * k))
+    integrand = lambda z: (np.exp((-1 / 2) * (1 / k) * (z ** 2))) * (function(z))
+    integral = integrate.quad(integrand, -np.inf, np.inf)
+    value = coeff * integral[0]
+    est_error = integral[1]
+
+    return value, est_error
+
+def rho_diff(activation_function, diff_times):
+    rhodiff = lambda z: smp.diff(activation_function(z), z, diff_times)
+
+    return rhodiff[0]
 
 
 def analytical_recursion(activation_function, X, depth, Cw, Cb):
