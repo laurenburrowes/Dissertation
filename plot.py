@@ -6,7 +6,7 @@ import os
 import function as func
 from scipy.optimize import curve_fit
 from scipy.stats import normaltest
-import main as main
+
 #Function to return the mean
 def mean(arr):
     return sum(arr) / len(arr)
@@ -22,6 +22,8 @@ def std_dev(arr):
 def gaussian(x, mu, sigma, A):
     return A * np.exp(-(x - mu) ** 2 / (2 * sigma ** 2))
 
+#Linear activation function:
+linear = lambda z: z
 
 #Purely for file save locations and
 def determine_plot_type(activation_function):
