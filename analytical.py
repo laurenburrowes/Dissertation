@@ -50,10 +50,10 @@ def fixed_pt_goal_seek(activation_function, start, threshold):
             exp_dash = func.avg_rho_sq(rho_diff_tanh, k)
             # The expectation value of rho^2(z^2-k), used for parallel susceptibility:
             func2 = lambda  z: activation_function(z)**2 * (z*z - k)
-        #if plot_type == "Linear":
-         #   exp_dash = func.avg_rho_sq(rho_diff_lin, k)
-            # The expectation value of rho^2(z^2-k), used for parallel susceptibility:
-          #  func2 = lambda  z: z**2 * (z*z - k)
+        if plot_type == "Linear":
+            exp_dash = func.avg_rho_sq(rho_diff_lin, k)
+             #The expectation value of rho^2(z^2-k), used for parallel susceptibility:
+            func2 = lambda  z: z**2 * (z*z - k)
         deriv_2 = func.avgrho(func2, k)
         # chi_perp / chi_parallel:
         perppar = (2*(k) * exp_dash[0]) / (deriv_2[0]) 
