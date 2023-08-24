@@ -52,12 +52,12 @@ def fixed_pt_goal_seek(activation_function, start, threshold):
             func2 = lambda  z: z**2 * (z*z - k)
         deriv_2 = func.avgrho(func2, k)
         # chi_perp / chi_parallel:
-        perppar = (2*(k) * exp_dash[0]) / (deriv_2[0]) 
+        perppar = (2*(k**2) * exp_dash[0]) / (deriv_2[0]) 
         diff = target - perppar # difference between target value (1) and the current value of chi_perp/chi_parallel
         print(k, perppar, diff)
         k_array.append(k)
         # changing the value of k based on the difference to target:
-        k -= diff/10
+        k -= abs(diff)/10
         x_array.append(i)
         i+=1 # number of iterations = number of layers
 

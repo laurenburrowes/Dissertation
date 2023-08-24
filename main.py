@@ -1,6 +1,7 @@
 import tensorflow as tf
 import function as func
 import analytical as ana
+import plot
 
 # Activation Function Options:
 # [1.] tf.nn.tanh [2.] tf.nn.sigmoid [3.] tf.nn.elu [4.] tf.nn.relu [5.] tf.nn.selu [6.] tf.nn.gelu [7.] func.linear
@@ -27,11 +28,11 @@ import analytical as ana
 step = 0.5
 for i in range(3):
     i += step
-    ana.fixed_pt_goal_seek(tf.nn.tanh, i, 0.01)
+    ana.fixed_pt_goal_seek(plot.linear, i, 0.01)
     if i != 0.5:
         i -= step
-        ana.fixed_pt_goal_seek(tf.nn.tanh, i, 0.01)
-ana.fixed_pt_goal_seek(tf.nn.tanh, 0.1, 0.01)
+        ana.fixed_pt_goal_seek(plot.linear, i, 0.01)
+ana.fixed_pt_goal_seek(plot.linear, 0.1, 0.01)
 
 
 #ana.zsq(tf.nn.tanh, 8, 11, 10, 55, 0.01)

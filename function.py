@@ -353,7 +353,10 @@ def numerical_analysis(activation_function, initial_width, final_width, depth, C
 
 def avg_rho_sq(activation_function, k):
     coeff = 1 / (np.sqrt(2 * math.pi * k))
-    integrand = lambda z: (np.exp((-1 / 2) * (1 / k) * (z ** 2))) * (activation_function(z) ** 2)
+    if activation_function == 1:
+        integrand = lambda z: (np.exp((-1 / 2) * (1 / k) * (z ** 2))) * (1 ** 2)
+    else:
+        integrand = lambda z: (np.exp((-1 / 2) * (1 / k) * (z ** 2))) * (activation_function(z) ** 2)
     integral = integrate.quad(integrand, -np.inf, np.inf)
     value = coeff * integral[0]
     est_error = integral[1]
