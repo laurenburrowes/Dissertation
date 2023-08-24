@@ -33,7 +33,8 @@ def fixed_pt_goal_seek(activation_function, start, threshold):
     rho_diff_lin = 1
 
     # Determine plot type
-    if activation_function == plot.linear:
+    linear = lambda z: z
+    if activation_function == linear:
         plot_type = "Linear"
     else:
         plot_type = plot.determine_plot_type(activation_function)
