@@ -8,6 +8,7 @@ import plot
 from scipy.optimize import curve_fit
 from scipy import integrate
 import os
+import analytical as ana
 
 #Generates the weights and bias's for the network by drawing them at random from some normal distribution
 def initialization(input_size_, hidden_size_, Mu_, STD_, nl, weightorbias):
@@ -24,8 +25,8 @@ def initialization(input_size_, hidden_size_, Mu_, STD_, nl, weightorbias):
 
 
 #Linear activation function
-def linear(Z):
-    A = Z
+def linear(z):
+    A = z
     return A
 
 
@@ -116,16 +117,16 @@ def initialise_network(activation_function, width, depth, Cw, Cb, Mu, Nboot, res
                 Ws[i, l] = initialization(lsizes[l], lsizes[l + 1], Mu, np.sqrt(Cw) / lsizes[l], l, weightorbias="weight")
             if rescale == False:
                 Bs[i, l] = initialization(lsizes[l], lsizes[l + 1], Mu, np.sqrt(Cb), l, weightorbias="bias")
-                Ws[i, l] = initialization(lsizes[l], lsizes[l + 1], Mu, np.sqrt(Cw), l, weightorbias="weight")
+                Ws[i, l] = initialization(lsizes[l], lsizes[l + 1], Mu, np.sqrt(Cw)/lsizes[l], l, weightorbias="weight")
 
     #Filtering the input bias and weight distribution data to plot on a histogram
-    #Whist, Bhist = bootobj_extr(1, 1, 1, Nboot=Nboot, Ws=Ws, Bs=Bs)
+    Whist, Bhist = bootobj_extr(1, 1, 1, Nboot=Nboot, Ws=Ws, Bs=Bs)
 
     #Plotting the bias input distribution
-    #plot.bias_input_dist(Bhist, width, depth, Cw, Cb, Mu, Nboot, plot_type)
+    plot.bias_input_dist(Bhist, width, depth, Cw, Cb, Mu, Nboot, plot_type)
 
     #Plotting the weight input distribution
-    #plot.weight_input_dist(Whist, width, depth, Cw, Cb, Mu, Nboot, plot_type)
+    plot.weight_input_dist(Whist, width, depth, Cw, Cb, Mu, Nboot, plot_type)
 
     # Input quantities
     X = tf.constant([[30]], dtype=tf.float32)
@@ -186,7 +187,7 @@ def initialise_network(activation_function, width, depth, Cw, Cb, Mu, Nboot, res
     return fit_zsq, error_fit_zsq, data_zsq
 
 # Function to determine kl (g0l), g1l and the order(1/nsq) correction to eq's 5.108-5.110 for finite width networks for a single input
-def numerical_analysis(activation_function, initial_width, final_width, depth, Cw, Cb, Mu, Nboot, rescale):
+def numerical_analysis(activation_function, initial_width, final_width, depth, Cw, Cb, Mu, Nboot, rescale, start, threshold):
 
     # Determines plot from activation function - just for plotting and saving
     plot_type = plot.determine_plot_type(activation_function)
@@ -224,8 +225,10 @@ def numerical_analysis(activation_function, initial_width, final_width, depth, C
     # Starting the numerical analysis
     print("----Numerical Analysis----")
 
-    for l in range(depth):
-
+    l = 0
+    while l < depth:
+        #ana.zsq(activation_function, initial_width, final_width, depth, start, threshold)
+        l+=1
         #Arrays to store values
         l_fit_matrix = []
         error_l_fit_matrix = []
@@ -234,17 +237,25 @@ def numerical_analysis(activation_function, initial_width, final_width, depth, C
 
         #Picking the specific values required from the matrices that allow for us to plot <Zsq> against 1/w
         for w, j in enumerate(range(initial_width, final_width+1)):
-            l_fit_matrix.append(fit_zsq_matrix[l, w])
-            error_l_fit_matrix.append(err_fit_zsq_matrix[l, w])
-            l_data_matrix.append(data_zsq_matrix[l, w])
+            l_fit_matrix.append(fit_zsq_matrix[l-1, w])
+            error_l_fit_matrix.append(err_fit_zsq_matrix[l-1, w])
+            l_data_matrix.append(data_zsq_matrix[l-1, w])
             inv_width_axis.append(1/j)
 
-        print(f"\n----Raw network Out. Dist. analysis for Layer {l+1}----")
+        print(f"\n----Raw network Out. Dist. analysis for Layer {l}----")
 
         # Best fitting the stored values in order to match "zl_sq", this gives us the best values for kl, g1l and the correction using the raw network output
-        plt.clf()
+        #plt.clf()
         data_params, _ = curve_fit(zl_sq, inv_width_axis, l_data_matrix)
+        k_array = []
+        # Taking the K values from our previous analysis
+        ks = ana.fixed_pt_goal_seek(activation_function, start, threshold)
+        #k_array.append(ks[3])
+
+        print("K values in numerical analysis", k_array)
+
         data_kl = data_params[0]
+        #data_kl_array = ks[3]
         data_kl_array.append(data_kl)
         data_g1l = data_params[1]
         data_g1l_array.append(data_g1l)
@@ -252,11 +263,11 @@ def numerical_analysis(activation_function, initial_width, final_width, depth, C
         data_correc_array.append(data_correc)
 
         # Printing these values for the specific layers
-        print(f"k{l + 1}: ", data_kl, f"\ng[1]({l + 1}): ", data_g1l, f"\n1/nsq Correction Coeff: ", data_correc)
+        print(f"k{l}: ", data_kl, f"\ng[1]({l}): ", data_g1l, f"\n1/nsq Correction Coeff: ", data_correc)
 
         # Now plotting these stored outputs as a scatter graph
-        plt.clf()
-        plt.scatter(inv_width_axis, l_data_matrix, marker="x", label="Data Points")
+        #plt.clf()
+       #plt.scatter(inv_width_axis, l_data_matrix, color = 'green', marker="x", label="Data Points")
 
         # Using the best fit parameters to make a best fit curve plot, allows for visualisation of how well the kl, g1l and corrections fit the data
         x_axis = np.linspace(1 / initial_width, 1 / final_width, 500)
@@ -266,51 +277,81 @@ def numerical_analysis(activation_function, initial_width, final_width, depth, C
             data_curve_y = zl_sq(i, data_kl, data_g1l, data_correc)
             data_curve_y_array.append(data_curve_y)
 
-        plt.plot(x_axis, data_curve_y_array, "r--", label="Best Fit")
+        #plt.plot(x_axis, data_curve_y_array, "r--", label="Best Fit")
 
         # Properly labelling and saving the assosciated plot
-        plt.legend()
-        plt.xlabel(f'Inverse Width')
-        plt.ylabel('<Zsq>')
-        plt.suptitle(f'<Zsq> vs 1/w (Raw Network OutDist Data) (Layer {l + 1})')
-        plt.title(f'k({l + 1}) = {round(data_kl, 2)}, g[1]({l + 1}) = {round(data_g1l, 2)}, Correction Scale = {round(data_correc, 2)}')
-        os.makedirs(f'Plots/Analysis_Plots/{plot_type}/Avg_Zsq/Raw_OutDist_Data_Plots/Cb={Cb} Cw={Cw} Nb={Nboot} Mu={Mu}/{initial_width}w-{final_width}w & {depth}d', exist_ok=True)
-        plt.savefig(f'Plots/Analysis_Plots/{plot_type}/Avg_Zsq/Raw_OutDist_Data_Plots/Cb={Cb} Cw={Cw} Nb={Nboot} Mu={Mu}/{initial_width}w-{final_width}w & {depth}d/Layer {l + 1}.png')
+        #plt.legend("Plots using TensorFlow generated values")
+        #plt.xlabel(f'Inverse Width')
+        #plt.ylabel('<Zsq>')
+        #plt.suptitle(f'<Zsq> vs 1/w (Raw Network OutDist Data) (Layer {l + 1})')
+        #plt.title(f'k({l + 1}) = {round(data_kl_array[l], 2)}, g[1]({l + 1}) = {round(data_g1l, 2)}, Correction Scale = {round(data_correc, 2)}')
+        #os.makedirs(f"Plots for 2-pt correlator/Tanh", exist_ok=True)
+        #plt.savefig(f"Plots for 2-pt correlator/Tanh/Layer = {l}.png")
+        #os.makedirs(f'Plots/Analysis_Plots/{plot_type}/Avg_Zsq/Raw_OutDist_Data_Plots/Cb={Cb} Cw={Cw} Nb={Nboot} Mu={Mu}/{initial_width}w-{final_width}w & {depth}d', exist_ok=True)
+        #plt.savefig(f'Plots/Analysis_Plots/{plot_type}/Avg_Zsq/Raw_OutDist_Data_Plots/Cb={Cb} Cw={Cw} Nb={Nboot} Mu={Mu}/{initial_width}w-{final_width}w & {depth}d/Layer {l + 1}.png')
 
         # Starting the numerical analysis for the raw network output data
-        print(f"\n----Fitted Gaussian Out. Dist. data analysis for Layer {l+1}----")
+        print(f"\n----Fitted Gaussian Out. Dist. data analysis for Layer {l}----")
 
         # Best fitted kl, g1l and corrections to the networks fitted output
-        plt.clf()
+        #plt.clf()
         fit_params, _ = curve_fit(zl_sq, inv_width_axis, l_fit_matrix, sigma = error_l_fit_matrix)
+        #fit_kl_array = ks[3]
+        #fit_kl_array.append(fit_kl)
         fit_kl = fit_params[0]
         fit_kl_array.append(fit_kl)
         fit_g1l = fit_params[1]
         fit_g1l_array.append(fit_g1l)
         fit_correc = fit_params[2]
         fit_correc_array.append(fit_correc)
+        print("Fitted K values", fit_kl_array)
+        print("Raw K values", data_kl_array)
 
         # Same again, using the best fitted network output data instead of the raw data
-        print(f"k{l+1}: ", fit_kl, f"\ng[1]({l+1}): ", fit_g1l, f"\n1/nsq Correction Coeff: ", fit_correc)
+        print(f"k{l}: ", fit_kl, f"\ng[1]({l}): ", fit_g1l, f"\n1/nsq Correction Coeff: ", fit_correc)
 
-        plt.clf()
-        plt.scatter(inv_width_axis, l_fit_matrix, marker="x", label="Data Points")
+        nums = final_width - initial_width
+        # G[1](l) value based on gradient:
+        fit = (l_fit_matrix[nums]-l_fit_matrix[0])/(inv_width_axis[nums]-inv_width_axis[0])
+
+        #plt.clf()
 
         fitted_curve_y_array = []
 
         for i in x_axis:
             fitted_curve_y = zl_sq(i, fit_kl, fit_g1l, fit_correc)
             fitted_curve_y_array.append(fitted_curve_y)
+        
 
-        plt.plot(x_axis, fitted_curve_y_array, "r--", label="Best Fit")
+        #Line of best fit:
+        fit_line_x = []
+        fit_line_x.append(inv_width_axis[0])
+        fit_line_x.append(inv_width_axis[nums])
 
+        fit_line_y = []
+        fit_line_y.append(l_fit_matrix[0])
+        fit_line_y.append(l_fit_matrix[nums])
+
+
+        slope, intercept = np.polyfit(fit_line_x, fit_line_y, 1)
+        print("slope = ", slope)
+        print(f"y intercept (K({l})) =  ", intercept)
+
+        #plt.plot(x_axis, fitted_curve_y_array, "r--", label="Best Fit")
+        plt.scatter(inv_width_axis, l_fit_matrix, color = 'orange', marker="x", label= f"G[1](l) = {round(fit,3)}\n K({l}) = {round(intercept,3)}")
+        plt.plot(fit_line_x, fit_line_y, 'b--')
         plt.legend()
-        plt.xlabel(f'Inverse Width')
-        plt.ylabel('<Zsq>')
-        plt.suptitle(f'<Zsq> vs 1/w (Using Best Fitted OutDist Data) (Layer {l + 1})')
-        plt.title(f'k({l + 1}) = {round(fit_kl, 2)}, g[1]({l + 1}) = {round(fit_g1l, 2)}, Correction Scale = {round(fit_correc, 2)}')
-        os.makedirs(f'Plots/Analysis_Plots/{plot_type}/Avg_Zsq/Fitted_OutDist_Data_Plots/Cb={Cb} Cw={Cw} Nb={Nboot} Mu={Mu}/{initial_width}w-{final_width}w & {depth}d', exist_ok=True)
-        plt.savefig(f'Plots/Analysis_Plots/{plot_type}/Avg_Zsq/Fitted_OutDist_Data_Plots/Cb={Cb} Cw={Cw} Nb={Nboot} Mu={Mu}/{initial_width}w-{final_width}w & {depth}d/Layer {l + 1}.png')
+        plt.xlabel(f'1/width')
+        plt.ylabel('<Z^2>')
+        plt.suptitle(f'Layer {l},')
+        plt.title(f'G^(0)({l}) = K^({l}) = {round(fit_kl, 2)}, G^(1)({l}) = {round(fit, 2)}')
+        os.makedirs(f"Plots for 2-pt correlator/Tanh/Comparison/{initial_width}w - {final_width}w, {depth}d", exist_ok=True)
+        plt.savefig(f"Plots for 2-pt correlator/Tanh/Comparison/{initial_width}w - {final_width}w, {depth}d/Layer (numerical) = {l}.png")
+        plt.clf()
+        #os.makedirs(f'Plots/Analysis_Plots/{plot_type}/Avg_Zsq/Fitted_OutDist_Data_Plots/Cb={Cb} Cw={Cw} Nb={Nboot} Mu={Mu}/{initial_width}w-{final_width}w & {depth}d', exist_ok=True)
+        #plt.savefig(f'Plots/Analysis_Plots/{plot_type}/Avg_Zsq/Fitted_OutDist_Data_Plots/Cb={Cb} Cw={Cw} Nb={Nboot} Mu={Mu}/{initial_width}w-{final_width}w & {depth}d/Layer {l + 1}.png')
+    
+
 
     print("\n----Finished----")
 
@@ -319,8 +360,12 @@ def numerical_analysis(activation_function, initial_width, final_width, depth, C
 def avg_rho_sq(activation_function, k):
 
     coeff = 1 / (np.sqrt(2 * math.pi * k))
-    integrand = lambda z: (np.exp((-1 / 2) * (1 / k) * (z ** 2))) * (activation_function(z) ** 2)
-    integral = integrate.quad(integrand, -np.inf, np.inf)
+    if activation_function == "Tanh":
+        integrand = lambda z: (np.exp((-1 / 2) * (1 / k) * (z ** 2))) * (activation_function(z) ** 2)
+        integral = integrate.quad(integrand, -np.inf, np.inf)
+    if activation_function == "Linear":
+        integrand = lambda z: (np.exp((-1 / 2) * (1 / k) * (z ** 2))) * (z ** 2)
+        integral = integrate.quad(integrand, -np.inf, np.inf)
     value = coeff * integral[0]
     est_error = integral[1]
 

@@ -6,7 +6,7 @@ import os
 import function as func
 from scipy.optimize import curve_fit
 from scipy.stats import normaltest
-
+import main as main
 #Function to return the mean
 def mean(arr):
     return sum(arr) / len(arr)
@@ -65,8 +65,8 @@ def bias_input_dist(Bhist, width, depth, Cw, Cb, Mu, Nboot, plot_type):
     bias_plot_name = f"{width}w & {depth}d, Nboot = {Nboot}, Cb={round(Cb, 2)}, Mu = {round(Mu, 2)}"
     plt.title(f"{bias_plot_name}")
 
-    os.makedirs(f"Plots/Input_Dists/{plot_type}/Bias_In_Dist/Cb={Cb} Cw={Cw} Nb={Nboot} Mu={Mu}", exist_ok=True)
-    plt.savefig(f'Plots/Input_Dists/{plot_type}/Bias_In_Dist/Cb={Cb} Cw={Cw} Nb={Nboot} Mu={Mu}/{width}w {depth}d.png')
+    os.makedirs(f"Dist. Plots/Input_Dists/{plot_type}/Bias_In_Dist/Cb={Cb} Cw={Cw} Nb={Nboot} Mu={Mu}", exist_ok=True)
+    plt.savefig(f'Dist. Plots/Input_Dists/{plot_type}/Bias_In_Dist/Cb={Cb} Cw={Cw} Nb={Nboot} Mu={Mu}/{width}w {depth}d.png')
     # plt.show()
     plt.clf()
 
@@ -89,8 +89,8 @@ def weight_input_dist(Whist, width, depth, Cw, Cb, Mu, Nboot, plot_type):
     weight_plot_name = f"{width}w & {depth}d, Nboot = {Nboot}, Cw={round(Cw, 2)}, Mu = {round(Mu, 2)}"
     plt.title(f"{weight_plot_name}")
 
-    os.makedirs(f"Plots/Input_Dists/{plot_type}/Weight_In_Dist/Cb={Cb} Cw={Cw} Nb={Nboot} Mu={Mu}", exist_ok=True)
-    plt.savefig(f"Plots/Input_Dists/{plot_type}/Weight_In_Dist/Cb={Cb} Cw={Cw} Nb={Nboot} Mu={Mu}/{width}w {depth}d.png")
+    os.makedirs(f"Dist. Plots/Input_Dists/{plot_type}/Weight_In_Dist/Cb={Cb} Cw={Cw} Nb={Nboot} Mu={Mu}", exist_ok=True)
+    plt.savefig(f"Dist. Plots/Input_Dists/{plot_type}/Weight_In_Dist/Cb={Cb} Cw={Cw} Nb={Nboot} Mu={Mu}/{width}w {depth}d.png")
     # plt.show()
     plt.clf()
 
@@ -138,8 +138,8 @@ def final_out_dist(output_array, width, depth, Cw, Cb, Mu, Nboot, plot_type, res
     plt.text(xlim, 0.82*ylim, f"Fit Output Stats:\nMean={round(coeff[0], 4)}\nFitted STD={round(STD_fit, 4)}\nData STD={round(STD_array, 4)}\nAmp={round(coeff[2], 4)}", fontsize=9)
 
     #Saves and files plot to a new or existing directory
-    os.makedirs(f"Plots/Output_Dists/Final_Layer/{plot_type}/Cb={Cb} Cw={Cw} Nb={Nboot} Mu={Mu}", exist_ok=True)
-    plt.savefig(f"Plots/Output_Dists/Final_Layer/{plot_type}/Cb={Cb} Cw={Cw} Nb={Nboot} Mu={Mu}/{width}w {depth}d.png")
+    os.makedirs(f"Dist. Plots/Output_Dists/Final_Layer/{plot_type}/Cb={Cb} Cw={Cw} Nb={Nboot} Mu={Mu}", exist_ok=True)
+    plt.savefig(f"Dist. Plots/Output_Dists/Final_Layer/{plot_type}/Cb={Cb} Cw={Cw} Nb={Nboot} Mu={Mu}/{width}w {depth}d.png")
     #plt.show()
     plt.clf()
 
@@ -211,8 +211,8 @@ def output_dist_per_layer(A, width, depth, i, Cw, Cb, Mu, Nboot, plot_type, resc
     plt.text(xlim, 0.78 * ylim2, f"Fit Output Stats:\nMean={round(coeff[0], 4)}\nFitted STD={round(STD_fit, 4)}\nData STD={round(STD_data, 4)}\nAmp={round(coeff[2], 4)}\nFWHM={round(FWHM, 4)}", fontsize=9)
 
     #Saves and files plot to a new or existing directory
-    os.makedirs(f"Plots/Output_Dists/Each_Layer/{plot_type}/Cb={Cb} Cw={Cw} Nb={Nboot} Mu={Mu}/{width}w {depth}d", exist_ok=True)
-    plt.savefig(f"Plots/Output_Dists/Each_Layer/{plot_type}/Cb={Cb} Cw={Cw} Nb={Nboot} Mu={Mu}/{width}w {depth}d/Layer {i+1}.png")
+    os.makedirs(f"Dist. Plots/Output_Dists/Each_Layer/{plot_type}/Cb={Cb} Cw={Cw} Nb={Nboot} Mu={Mu}/{width}w {depth}d", exist_ok=True)
+    plt.savefig(f"Dist. Plots/Output_Dists/Each_Layer/{plot_type}/Cb={Cb} Cw={Cw} Nb={Nboot} Mu={Mu}/{width}w {depth}d/Layer {i+1}.png")
     #plt.show()
     plt.clf()
 
@@ -229,8 +229,8 @@ def gaussian_width_and_depth(width, depth, Cw, Cb, Mu, Nboot, FWHM_array, plot_t
     plt.title("FWHM vs Layer")
     plt.text(0.75 * depth, 0.75 * FWHM_array[0], f"Input Params:\n{plot_type}\n{width}w & {depth}d\nCw={Cw} & Cb={Cb}\nNboot={Nboot}", fontsize=10)
 
-    os.makedirs(f"Plots/FWHM_vs_Depth/{plot_type}/Cb={Cb} Cw={Cw} Nb={Nboot} Mu={Mu}", exist_ok=True)
-    plt.savefig(f"Plots/FWHM_vs_Depth/{plot_type}/Cb={Cb} Cw={Cw} Nb={Nboot} Mu={Mu}/{width}w {depth}d")
+    os.makedirs(f"Dist. Plots/FWHM_vs_Depth/{plot_type}/Cb={Cb} Cw={Cw} Nb={Nboot} Mu={Mu}", exist_ok=True)
+    plt.savefig(f"Dist. Plots/FWHM_vs_Depth/{plot_type}/Cb={Cb} Cw={Cw} Nb={Nboot} Mu={Mu}/{width}w {depth}d")
     plt.clf()
 
     return
