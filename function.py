@@ -8,7 +8,6 @@ import plot
 from scipy.optimize import curve_fit
 from scipy import integrate
 import os
-import analytical as ana
 
 #Generates the weights and bias's for the network by drawing them at random from some normal distribution
 def initialization(input_size_, hidden_size_, Mu_, STD_, nl, weightorbias):
@@ -249,6 +248,7 @@ def numerical_analysis(activation_function, initial_width, final_width, depth, C
         data_params, _ = curve_fit(zl_sq, inv_width_axis, l_data_matrix)
         k_array = []
         # Taking the K values from our previous analysis
+        import analytical as ana
         ks = ana.fixed_pt_goal_seek(activation_function, start, threshold)
         #k_array.append(ks[3])
 

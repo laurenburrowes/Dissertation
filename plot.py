@@ -3,10 +3,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow as tf
 import os
-import function as func
 from scipy.optimize import curve_fit
 from scipy.stats import normaltest
-import main as main
+
 #Function to return the mean
 def mean(arr):
     return sum(arr) / len(arr)
@@ -27,7 +26,8 @@ def gaussian(x, mu, sigma, A):
 def determine_plot_type(activation_function):
 
     #These "if" statements are used in classifying the type of plot
-    if activation_function == func.linear:
+    linear = lambda z: z
+    if activation_function == linear:
         plot_type = "Linear"
     if activation_function == tf.nn.relu:
         plot_type = "RELU"

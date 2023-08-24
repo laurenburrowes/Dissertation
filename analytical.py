@@ -9,7 +9,6 @@ import function as func
 from scipy.optimize import curve_fit
 from scipy import integrate
 import os
-import main as main
 
 
 # Using the second analytical method in the book, pg 126.
@@ -34,7 +33,8 @@ def fixed_pt_goal_seek(activation_function, start, threshold):
     rho_diff_lin = 1
 
     # Determine plot type
-    if activation_function == main.linear:
+    linear = lambda z: z
+    if activation_function == linear:
         plot_type = "Linear"
     else:
         plot_type = plot.determine_plot_type(activation_function)
