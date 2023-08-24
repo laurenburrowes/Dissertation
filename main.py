@@ -22,18 +22,17 @@ import analytical as ana
 #Showing the convergence to a fixed point K*.
 # func.analytical_recursion(tf.nn.tanh, 100, 10, 1, 0)
 
-#Linear activation function:
-linear = lambda z: z
+
 #Analytical recursion finding fixed point(s)
-#step = 0.5
-#for i in range(3):
-#    i += step
-#    ana.fixed_pt_goal_seek(tf.nn.tanh, i, 0.01)
-#    if i != 0.5:
-#        i -= step
-#        ana.fixed_pt_goal_seek(tf.nn.tanh, i, 0.01)
-#ana.fixed_pt_goal_seek(tf.nn.tanh, 0.1, 0.01)
+step = 0.5
+for i in range(3):
+    i += step
+    ana.fixed_pt_goal_seek(tf.nn.tanh, i, 0.01)
+    if i != 0.5:
+        i -= step
+        ana.fixed_pt_goal_seek(tf.nn.tanh, i, 0.01)
+ana.fixed_pt_goal_seek(tf.nn.tanh, 0.1, 0.01)
 
 
 #ana.zsq(tf.nn.tanh, 8, 11, 10, 55, 0.01)
-func.numerical_analysis(tf.nn.tanh, 8, 15, 15, 1, 0, 0, 1000, False, 0.1, 0.01)
+#func.numerical_analysis(tf.nn.tanh, 8, 15, 15, 1, 0, 0, 1000, False, 0.1, 0.01)

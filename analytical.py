@@ -33,11 +33,7 @@ def fixed_pt_goal_seek(activation_function, start, threshold):
     rho_diff_lin = 1
 
     # Determine plot type
-    linear = lambda z: z
-    if activation_function == linear:
-        plot_type = "Linear"
-    else:
-        plot_type = plot.determine_plot_type(activation_function)
+    plot_type = plot.determine_plot_type(activation_function)
 
     k_array = []
     k = start
@@ -68,8 +64,6 @@ def fixed_pt_goal_seek(activation_function, start, threshold):
     Cw = 1/exp_dash[0]
     Cb = k - (Cw * func.avg_rho_sq(activation_function, k)[0])
     print("Cw = ", Cw, "Cb = ", Cb, "K* = ", k)
-
-    plot_type = plot.determine_plot_type(activation_function)
 
     plt.plot(x_array, k_array)
     plt.xlabel("Layer")

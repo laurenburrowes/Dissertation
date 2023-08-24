@@ -11,6 +11,12 @@ def mean(arr):
     return sum(arr) / len(arr)
 
 
+#Linear activation function
+def linear(z):
+    A = z
+    return A
+
+
 #Calculates the standard deviation for a given input array of data
 def std_dev(arr):
     arr_mean = mean(arr)
@@ -21,14 +27,12 @@ def std_dev(arr):
 def gaussian(x, mu, sigma, A):
     return A * np.exp(-(x - mu) ** 2 / (2 * sigma ** 2))
 
-#Linear activation function:
-linear = lambda z: z
 
 #Purely for file save locations and
 def determine_plot_type(activation_function):
 
     #These "if" statements are used in classifying the type of plot
-    linear = lambda z: z
+    # linear = lambda z: z
     if activation_function == linear:
         plot_type = "Linear"
     if activation_function == tf.nn.relu:
