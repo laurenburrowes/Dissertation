@@ -24,7 +24,7 @@ def initialization(input_size_, hidden_size_, Mu_, STD_, nl, weightorbias):
 
 
 #This function propagates the signal through the network
-def forward(X, i, activation_function, depth_, Ws, Bs, Layer_out_matrix):
+def forward(X, i, activation_function, width_, depth_, Ws, Bs, Layer_out_matrix, Layer_zsq_matrix):
 
     with tf.GradientTape() as tape:
         tape.watch([param for param in [Ws[i, j] for j in range(depth_)] + [Bs[i, j] for j in range(depth_)]])
@@ -33,12 +33,23 @@ def forward(X, i, activation_function, depth_, Ws, Bs, Layer_out_matrix):
         A = X
 
         for l in range(depth_):
+            layer_width = width_[l+1]
             #Calculating the preactivation and activation function for a given hidden layer
             Z = tf.add(tf.matmul(A, Ws[i, l]), Bs[i, l])
             A = activation_function(Z)
 
+            zsq = 0
+
+            for k in tf.get_static_value(Z[0]):
+                z = k
+                zsq += z**2
+
+            
+            Layer_zsq_matrix[i, l] = zsq/layer_width 
+
             #Appending the output distribution for each layer of the network
             Layer_out_matrix[i, l] = Z
+
 
         Z_last = Z
 
@@ -76,7 +87,7 @@ def zl_sq(inv_w, kl, g1l, correc):
 
 
 #This function initiates the neural network with the given inputs and gives the statistics of each step
-def initialise_network(activation_function, width, depth, Cw, Cb, Mu, Nboot, rescale):
+def initialise_network(activation_function, width, depth, Cw, Cb, Mu, Nboot, rescale, x_input):
 
     print("\n----Initiating----")
 
@@ -110,30 +121,32 @@ def initialise_network(activation_function, width, depth, Cw, Cb, Mu, Nboot, res
                 Ws[i, l] = initialization(lsizes[l], lsizes[l + 1], Mu, np.sqrt(Cw) / lsizes[l], l, weightorbias="weight")
             if rescale == False:
                 Bs[i, l] = initialization(lsizes[l], lsizes[l + 1], Mu, np.sqrt(Cb), l, weightorbias="bias")
-                Ws[i, l] = initialization(lsizes[l], lsizes[l + 1], Mu, np.sqrt(Cw)/lsizes[l], l, weightorbias="weight")
+                Ws[i, l] = initialization(lsizes[l], lsizes[l + 1], Mu, np.sqrt(Cw)/(np.sqrt(lsizes[l])), l, weightorbias="weight")
 
     #Filtering the input bias and weight distribution data to plot on a histogram
     Whist, Bhist = bootobj_extr(1, 1, 1, Nboot=Nboot, Ws=Ws, Bs=Bs)
 
     #Plotting the bias input distribution
-    plot.bias_input_dist(Bhist, width, depth, Cw, Cb, Mu, Nboot, plot_type)
+    #plot.bias_input_dist(x_input, Bhist, width, depth, Cw, Cb, Mu, Nboot, plot_type)
 
     #Plotting the weight input distribution
-    plot.weight_input_dist(Whist, width, depth, Cw, Cb, Mu, Nboot, plot_type)
+    #plot.weight_input_dist(x_input, Whist, width, depth, Cw, Cb, Mu, Nboot, plot_type)
 
     # Input quantities
     X = tf.constant([[30]], dtype=tf.float32)
 
     #L'th layer output matrix
     Lom = np.zeros((Nboot, depth), dtype=object)
+    #z^2 matrix
+    Lzsqm = np.zeros((Nboot, depth), dtype=object) 
 
     #Final layer output layer array
     output_array = []
 
     #Propagates the signal throughout the network for every instantiation
     for i in range(Nboot):
-        Z = forward(X, i, activation_function, depth, Ws=Ws, Bs=Bs, Layer_out_matrix=Lom)
-        output_array.append(Z.numpy()[0][0])
+        Z_array = forward(X, i, activation_function, lsizes, depth, Ws=Ws, Bs=Bs, Layer_out_matrix=Lom, Layer_zsq_matrix=Lzsqm)
+        output_array.append(Z_array.numpy()[0][0])
 
     #Plot the final layer output distribution
     #plot.final_out_dist(output_array, width, depth, Cw, Cb, Mu, Nboot, plot_type, rescale)
@@ -148,12 +161,14 @@ def initialise_network(activation_function, width, depth, Cw, Cb, Mu, Nboot, res
     for l in range(depth):
         Z = np.zeros(Nboot)
         zsq = 0
+        zsq_std_array = []
         for i in range(Nboot):
             matrLom = Lom[i, l]
             Z[i] = matrLom[0, 0]
             # Calculating <Zsq> directly from the output data for every layer
-            zsq += (Z[i]**2)/Nboot
-        data_zsq.append(zsq)
+            zsq += (Lzsqm[i, l])/Nboot
+            data_zsq.append(zsq)
+
 
         #Plots the output distribution for every layer and appending each layers FWHM
         FWHM, STD_fit, STD_data = plot.output_dist_per_layer(Z, width, depth, l, Cw, Cb, Mu, Nboot, plot_type, rescale)
@@ -165,22 +180,24 @@ def initialise_network(activation_function, width, depth, Cw, Cb, Mu, Nboot, res
     #plot.gaussian_width_and_depth(width, depth, Cw, Cb, Mu, Nboot, FWHM_array, plot_type)
 
     ### <Zsq> using the fitted output data and integral ###
-    fit_zsq = []
-    error_fit_zsq = []
+        fit_zsq = []
+        error_fit_zsq = []
+
+    
 
     # Calculating the <Zsq> directly from the variance of the fitted gaussian output distributions for every layer
-    for sigma in STD_fit_array:
-        g = sigma**2
-        outputs = avg_zl_sq(g)
-        fit_zsq.append(outputs[0])
-        error_fit_zsq.append(outputs[1])
+        for sigma in STD_fit_array:
+            g = sigma**2
+            outputs = avg_zl_sq(g)
+            fit_zsq.append(outputs[0])
+            error_fit_zsq.append(outputs[1])
 
     print("----Complete----")
 
     return fit_zsq, error_fit_zsq, data_zsq
 
 # Function to determine kl (g0l), g1l and the order(1/nsq) correction to eq's 5.108-5.110 for finite width networks for a single input
-def numerical_analysis(activation_function, initial_width, final_width, depth, Cw, Cb, Mu, Nboot, rescale, start, threshold):
+def numerical_analysis(activation_function, initial_width, final_width, depth, Cw, Cb, Mu, Nboot, rescale, x_input):
 
     # Determines plot from activation function - just for plotting and saving
     plot_type = plot.determine_plot_type(activation_function)
@@ -207,7 +224,7 @@ def numerical_analysis(activation_function, initial_width, final_width, depth, C
     for w, j in enumerate(range(initial_width, final_width+1)):
 
         # Storing the network outputs for every width
-        zsq_fit, err_fit_zsq, zsq_data = initialise_network(activation_function, j, depth, Cw, Cb, Mu, Nboot, rescale)
+        zsq_fit, err_fit_zsq, zsq_data = initialise_network(activation_function, j, depth, Cw, Cb, Mu, Nboot, rescale, x_input)
 
         # Storing the network outputs for every layer
         for l in range(depth):
@@ -241,16 +258,16 @@ def numerical_analysis(activation_function, initial_width, final_width, depth, C
         #plt.clf()
         data_params, _ = curve_fit(zl_sq, inv_width_axis, l_data_matrix)
         k_array = []
-        # Taking the K values from our previous analysis
+        # Taking the K values from previous analytical techinques in analytical.py 
         import analytical as ana
-        ks = ana.fixed_pt_goal_seek(activation_function, start, threshold)
+        ks = ana.recursion_k(activation_function, x_input, Cw, Cb, depth)
         #k_array.append(ks[3])
 
-        print("K values in numerical analysis", k_array)
+        print("K values in numerical analysis", ks)
 
-        data_kl = data_params[0]
-        #data_kl_array = ks[3]
-        data_kl_array.append(data_kl)
+        data_kl = ks[l-1]
+        data_kl_array = ks
+       # data_kl_array.append(ks)
         data_g1l = data_params[1]
         data_g1l_array.append(data_g1l)
         data_correc = data_params[2]
@@ -260,8 +277,8 @@ def numerical_analysis(activation_function, initial_width, final_width, depth, C
         print(f"k{l}: ", data_kl, f"\ng[1]({l}): ", data_g1l, f"\n1/nsq Correction Coeff: ", data_correc)
 
         # Now plotting these stored outputs as a scatter graph
-        #plt.clf()
-       #plt.scatter(inv_width_axis, l_data_matrix, color = 'green', marker="x", label="Data Points")
+        plt.clf()
+        plt.scatter(inv_width_axis, l_data_matrix, color = 'orange', marker="x", label="Data Points")
 
         # Using the best fit parameters to make a best fit curve plot, allows for visualisation of how well the kl, g1l and corrections fit the data
         x_axis = np.linspace(1 / initial_width, 1 / final_width, 500)
@@ -274,15 +291,13 @@ def numerical_analysis(activation_function, initial_width, final_width, depth, C
         #plt.plot(x_axis, data_curve_y_array, "r--", label="Best Fit")
 
         # Properly labelling and saving the assosciated plot
-        #plt.legend("Plots using TensorFlow generated values")
-        #plt.xlabel(f'Inverse Width')
-        #plt.ylabel('<Zsq>')
-        #plt.suptitle(f'<Zsq> vs 1/w (Raw Network OutDist Data) (Layer {l + 1})')
-        #plt.title(f'k({l + 1}) = {round(data_kl_array[l], 2)}, g[1]({l + 1}) = {round(data_g1l, 2)}, Correction Scale = {round(data_correc, 2)}')
-        #os.makedirs(f"Plots for 2-pt correlator/Tanh", exist_ok=True)
-        #plt.savefig(f"Plots for 2-pt correlator/Tanh/Layer = {l}.png")
-        #os.makedirs(f'Plots/Analysis_Plots/{plot_type}/Avg_Zsq/Raw_OutDist_Data_Plots/Cb={Cb} Cw={Cw} Nb={Nboot} Mu={Mu}/{initial_width}w-{final_width}w & {depth}d', exist_ok=True)
-        #plt.savefig(f'Plots/Analysis_Plots/{plot_type}/Avg_Zsq/Raw_OutDist_Data_Plots/Cb={Cb} Cw={Cw} Nb={Nboot} Mu={Mu}/{initial_width}w-{final_width}w & {depth}d/Layer {l + 1}.png')
+        plt.legend("Plots using TensorFlow generated values")
+        plt.xlabel("1/width")
+        plt.ylabel("<Z^2>")
+        plt.title(f"Layer {l},\n G^(0)({l}) = K^({l}) = {round(data_kl_array[l-1],3)}, G^(1)({l}) = {round(data_g1l, 2)}")
+        os.makedirs(f"Plots for 2-pt correlator/Tanh/x = {x_input}/Raw/{initial_width}w - {final_width}w, {depth}d", exist_ok=True)
+        plt.savefig(f"Plots for 2-pt correlator/Tanh/x = {x_input}/Raw/{initial_width}w - {final_width}w, {depth}d/Layer = {l} (numerical).png")
+        plt.clf()
 
         # Starting the numerical analysis for the raw network output data
         print(f"\n----Fitted Gaussian Out. Dist. data analysis for Layer {l}----")
@@ -338,9 +353,9 @@ def numerical_analysis(activation_function, initial_width, final_width, depth, C
         plt.xlabel(f'1/width')
         plt.ylabel('<Z^2>')
         plt.suptitle(f'Layer {l},')
-        plt.title(f'G^(0)({l}) = K^({l}) = {round(fit_kl, 2)}, G^(1)({l}) = {round(fit, 2)}')
-        os.makedirs(f"Plots for 2-pt correlator/Tanh/Comparison/{initial_width}w - {final_width}w, {depth}d", exist_ok=True)
-        plt.savefig(f"Plots for 2-pt correlator/Tanh/Comparison/{initial_width}w - {final_width}w, {depth}d/Layer (numerical) = {l}.png")
+        plt.title(f'G^(0)({l}) = K^({l}) = {round(fit_kl, 2)}, G^(1)({l}) = {round(fit_g1l, 2)}')
+        os.makedirs(f"Plots for 2-pt correlator/Tanh/Comparison/x = {x_input}/{initial_width}w - {final_width}w, {depth}d", exist_ok=True)
+        plt.savefig(f"Plots for 2-pt correlator/Tanh/Comparison/x = {x_input}/{initial_width}w - {final_width}w, {depth}d/Layer (numerical) = {l}.png")
         plt.clf()
         #os.makedirs(f'Plots/Analysis_Plots/{plot_type}/Avg_Zsq/Fitted_OutDist_Data_Plots/Cb={Cb} Cw={Cw} Nb={Nboot} Mu={Mu}/{initial_width}w-{final_width}w & {depth}d', exist_ok=True)
         #plt.savefig(f'Plots/Analysis_Plots/{plot_type}/Avg_Zsq/Fitted_OutDist_Data_Plots/Cb={Cb} Cw={Cw} Nb={Nboot} Mu={Mu}/{initial_width}w-{final_width}w & {depth}d/Layer {l + 1}.png')
@@ -349,6 +364,7 @@ def numerical_analysis(activation_function, initial_width, final_width, depth, C
 
     print("\n----Finished----")
 
+# error STD/sqrt(Nboot)
     return
 
 def avg_rho_sq(activation_function, k):
@@ -361,7 +377,7 @@ def avg_rho_sq(activation_function, k):
     value = coeff * integral[0]
     est_error = integral[1]
 
-    return value, est_error
+    return value, est_error, value**2
 
 
 def avgrho(function, k):
@@ -373,36 +389,19 @@ def avgrho(function, k):
 
     return value, est_error
 
+def avg_rho_quar(activation_function, k):
+    coeff = 1/ (np.sqrt(2 * math.pi * k))
+    if activation_function == 1:
+        integrand = lambda z: (np.exp((-1 / 2) * (1 / k) * (z ** 2))) * (1 ** 2)
+    else:
+        integrand = lambda z: (np.exp((-1 / 2) * (1 / k) * (z ** 2))) * (activation_function(z) ** 4)
+    integral = integrate.quad(integrand, -np.inf, np.inf)
+    value = coeff * integral[0]
+    est_error = integral[1]
+
+    return value, est_error
+
 def rho_diff(activation_function, diff_times):
     rhodiff = lambda z: smp.diff(activation_function(z), z, diff_times)
 
     return rhodiff[0]
-
-
-def analytical_recursion(activation_function, X, depth, Cw, Cb):
-
-    k0 = Cb + Cw*(X**2)
-    ki = 0
-    ki_array = []
-    ki_err_array = []
-    l_array = []
-
-    for l in range(depth):
-
-        if l == 0:
-            ki = k0
-        else:
-            l_array.append(l + 1)
-            avg_rho = avg_rho_sq(activation_function, ki)
-            ki = (Cb + (Cw*(avg_rho[0])))
-            ki_array.append(ki)
-            ki_err = avg_rho[1]
-            ki_err_array.append(ki_err)
-
-        print(f"k{l+1} = ", ki)
-
-    plt.clf()
-    plt.plot(l_array, ki_array)
-    plt.show()
-
-    return

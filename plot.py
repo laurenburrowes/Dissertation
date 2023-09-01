@@ -52,7 +52,7 @@ def determine_plot_type(activation_function):
 
 
 #Plots the normal distribution of the input bias's
-def bias_input_dist(Bhist, width, depth, Cw, Cb, Mu, Nboot, plot_type):
+def bias_input_dist(x_input, Bhist, width, depth, Cw, Cb, Mu, Nboot, plot_type):
     # Test of the gaussianity of bias
     stat, p = normaltest(Bhist)
     # Print the result of the test
@@ -78,7 +78,7 @@ def bias_input_dist(Bhist, width, depth, Cw, Cb, Mu, Nboot, plot_type):
 
 
 #Plots the input distribution for the randomly generated weights
-def weight_input_dist(Whist, width, depth, Cw, Cb, Mu, Nboot, plot_type):
+def weight_input_dist(x_input, Whist, width, depth, Cw, Cb, Mu, Nboot, plot_type):
     # Test the gaussianity of the weights input distribution
     stat, p = normaltest(Whist)
     if p < 0.05:

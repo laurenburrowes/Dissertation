@@ -2,6 +2,7 @@ import tensorflow as tf
 import function as func
 import analytical as ana
 import plot
+import num
 
 # Activation Function Options:
 # [1.] tf.nn.tanh [2.] tf.nn.sigmoid [3.] tf.nn.elu [4.] tf.nn.relu [5.] tf.nn.selu [6.] tf.nn.gelu [7.] func.linear
@@ -25,15 +26,20 @@ import plot
 
 
 #Analytical recursion finding fixed point(s)
-step = 0.5
-for i in range(3):
-    i += step
-    ana.fixed_pt_goal_seek(plot.linear, i, 0.01)
-    if i != 0.5:
-        i -= step
-        ana.fixed_pt_goal_seek(plot.linear, i, 0.01)
-ana.fixed_pt_goal_seek(plot.linear, 0.1, 0.01)
+# step = 0.5
+# for i in range(3):
+#     i += step
+#     ana.fixed_pt_goal_seek(tf.nn.tanh, i, 0.01)
+#     if i != 0.5:
+#         i -= step
+#         ana.fixed_pt_goal_seek(tf.nn.tanh, i, 0.01)
+# ana.fixed_pt_goal_seek(tf.nn.tanh, 0.1, 0.01)
 
 
-#ana.zsq(tf.nn.tanh, 8, 11, 10, 55, 0.01)
-#func.numerical_analysis(tf.nn.tanh, 8, 15, 15, 1, 0, 0, 1000, False, 0.1, 0.01)
+# ana.zsq(tf.nn.tanh, 5, 8, 10, 55, 0.01)
+#func.numerical_analysis(tf.nn.tanh, 5, 8, 10, 1, 0, 0, 1000, False, 0.5)
+
+#num.analysis(tf.nn.tanh, input_x = 0.2, initial_width = 4, final_width = 8, depth = 8, Cw = 1, Cb = 0, Mu = 0, Nboot = 100, rescale = False)
+#ana.recursion_k(plot.linear, x = 0.2, Cw = 1,Cb = 0, depth = 15)
+
+ana.recursion_v(activation_function=tf.nn.tanh, x= 0.5, Cw=1, Cb=0, depth=20)
